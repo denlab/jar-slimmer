@@ -1,5 +1,7 @@
 # jar-slimmer
 
+* under construction, not usable right now
+
 FIXME: write description
 
 ## Usage

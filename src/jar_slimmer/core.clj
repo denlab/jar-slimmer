@@ -28,29 +28,6 @@
   [s] (half s second))
 
 ;; WARN: non-TCO optimized recursion, will blow the stack for deep trees !
-'(defn find-unused
-  "Find all elements of the set s for which (f (- s unused)) is true."
-  ([s f] (apply sorted-set (find-unused s s f)))
-  ([all seg f] (cond (empty? seg)      (sorted-set)
-                     (nil? (next seg)) (if (true-without? all seg f)
-                                         seg
-                                         (sorted-set))
-                     :otherwise        (if (true-without? all seg f)
-                                         seg
-                                         (concat (find-unused all (first-half seg) f)
-                                                 (find-unused all (second-half seg) f))))))
-
-'(defn find-unused
-  "Find all elements of the set s for which (f (- s unused)) is true."
-  ([s f] (apply sorted-set (find-unused s s f)))
-  ([all seg f] (if (empty? seg) (sorted-set)
-                   (if (true-without? all seg f)
-                     seg
-                     (if (next seg)
-                       (concat (find-unused all (first-half seg) f)
-                               (find-unused all (second-half seg) f))
-                       (sorted-set))))))
-
 (defn find-unused
   "Find all elements of the set s for which (f (- s unused)) is true."
   ([s f] (apply sorted-set (find-unused s s f)))

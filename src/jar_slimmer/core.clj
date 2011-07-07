@@ -1,4 +1,8 @@
-(ns jar-slimmer.core)
+(ns jar-slimmer.core
+  (:use [clargon.core])
+  (:gen-class))
+
+;; ------------------- <pure-functions> --------------------------------
 
 (defn sorted-set? "true if input is a sorted set, false otherwise"
   [s] (and (set? s) (sorted? s)))
@@ -40,3 +44,14 @@
 (defn smallest
   "Return the smallest sub seq of the given seq for which the given function return true"
   [s f] (compl s (find-unused s f)))
+
+;; ------------------- </pure-functions> -------------------------------
+
+;; --------------------- <side-effects> --------------------------------
+
+(defn run
+  "Run the given cmd, and return the exit code."
+  [s] (.waitFor (.exec (Runtime/getRuntime) s)))
+
+;; --------------------- </side-effects> -------------------------------
+

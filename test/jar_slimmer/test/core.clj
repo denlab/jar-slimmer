@@ -55,6 +55,19 @@
       a (sorted-set :a)
       b (sorted-set :b)]
   (fact (smallest ab pred) => a
-        (provided (find-unused ab (exactly pred)) => b
-                  (compl ab b) => a)))
+        (provided
+         (find-unused ab (exactly pred)) => b
+         (compl ab b)                    => a)))
+
+(fact (smallest-jar-list "cmd" "jar") => ["a"]
+      (provided
+       (jar-list "jar")              => ["a" "b"]
+       (smallest ["a" "b"] anything) => ["a"]))
+
+;.;. Good code is its own best documentation. -- Steve McConnell
+(fact (jar-slimmer "jar" "cmd") => nil
+      (provided
+       (smallest-jar-list "jar" "cmd") => ["a"]
+       (build-jar "jar" "jar.slim" ["a"])         => nil))
+
 

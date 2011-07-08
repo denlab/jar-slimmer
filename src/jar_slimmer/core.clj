@@ -58,10 +58,10 @@
         (clargon
          args
          (required ["-j" "--jar" "jar to test"])
-         (required ["-c" "--cmd" "Cmd to test the jar"]))])
-  )
+         (required ["-c" "--cmd" "Cmd to test the jar"]))]))
 
-;; TODO : use clojure.java.shell.sh
+;; Not using clojure.java.shell.sh, as we would need to parse then
+;; pass the params (?)
 (defn run-cmd
   "Run the given cmd, and return the exit code."
   [s] (.waitFor (.exec (Runtime/getRuntime) s)))
@@ -92,72 +92,4 @@
   "build the smallest possible jar given the jar and cmd"
   [j c] (build-jar j (str j ".slim") (smallest-jar-list j c)))
 
-
 ;; --------------------- </side-effects> -------------------------------
-
-;; ----------------------- <in-progress> -------------------------------
-
-(def jar-path "/home/denis/.m2/repository/org/clojure/clojure-contrib/1.2.0/clojure-contrib-1.2.0.jar")
-
-(def zip-is (ZipInputStream. (FileInputStream. jar-path)))
-
-
-'(let [out (ZipOutputStream. (FileOutputStream. (str jar-path ".slim")))]
-   (loop [ze (.getNextEntry zip-is)]
-     (when ze
-       (.putNextEntry out (ZipEntry. (.getName ze)))
-       (copy zip-is out)
-       (.closeEntry out)
-       (recur (.getNextEntry zip-is))))
-   (.close out))
-
-'(with-open [fos (FileOutputStream. (str jar-path ".slim"))
-             out (ZipOutputStream. fos)]
-   (loop [ze (.getNextEntry zip-is)]
-     (when ze
-       (.putNextEntry out (ZipEntry. (.getName ze)))
-       (copy zip-is out)
-       (.closeEntry out)
-       (recur (.getNextEntry zip-is)))))
-
-'(with-open [fos (FileOutputStream. (str jar-path ".slim"))
-             bos (BufferedOutputStream. fos)
-             out (ZipOutputStream. bos)]
-   (loop [ze (.getNextEntry zip-is)]
-     (when ze
-       (.putNextEntry out (ZipEntry. (.getName ze)))
-       (copy zip-is out)
-       (.closeEntry out)
-       (recur (.getNextEntry zip-is)))))
-
-(def zip-is (ZipInputStream. (FileInputStream. jar-path)))
-
-'(with-open [fis (FileInputStream. jar-path)
-             bis (BufferedInputStream. fis)
-             zis (ZipInputStream. bis)
-             fos (FileOutputStream. (str jar-path ".slim"))
-             bos (BufferedOutputStream. fos)
-             zos (ZipOutputStream. bos)]
-   (loop [ze (.getNextEntry zis)]
-     (when ze
-       (.putNextEntry zos (ZipEntry. (.getName ze)))
-       (copy zis zos)
-       (.closeEntry zos)
-       (recur (.getNextEntry zis)))))
-
-'(with-open
-    [fis (FileInputStream. jar-path)                bis (BufferedInputStream. fis)  zis (ZipInputStream. bis)
-     fos (FileOutputStream. (str jar-path ".slim")) bos (BufferedOutputStream. fos) zos (ZipOutputStream. bos)]
-  (loop [ze (.getNextEntry zis)]
-    (when ze
-      (.putNextEntry zos (ZipEntry. (.getName ze)))
-      (copy zis zos)
-      (.closeEntry zos)
-      (recur (.getNextEntry zis)))))
-
-
-(loop [ze (.getNextEntry zip-is)]
-  (when ze
-    (recur (.getNextEntry zip-is))))
-
-;; ----------------------- </in-progress> ------------------------------

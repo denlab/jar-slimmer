@@ -42,13 +42,13 @@
       (contains-at-least-2? [1 2]) => true
       (contains-at-least-2? [2])   => true)
 
-(fact (find-unused (sorted-set 2 3 4 6 7 8) at-least-in-2-4-or-6-8) => (sorted-set)
-      (find-unused (sorted-set 1 2 3 4 5 6 7 8 9 10) at-least-in-2-4-or-6-8) => (sorted-set 1 5 9 10))
+(fact (find-unused [2 3 4 6 7 8] at-least-in-2-4-or-6-8) => (sorted-set)
+      (find-unused [1 2 3 4 5 6 7 8 9 10] at-least-in-2-4-or-6-8) => (sorted-set 1 5 9 10))
 
 (fact
- (find-unused (sorted-set 2) contains-at-least-2?) => (sorted-set)
- (find-unused (sorted-set 1 2) contains-at-least-2?) => (sorted-set 1)
- (find-unused (sorted-set 1 2 3) contains-at-least-2?) => (sorted-set 1 3))
+ (find-unused [2] contains-at-least-2?) => (sorted-set)
+ (find-unused [1 2] contains-at-least-2?) => (sorted-set 1)
+ (find-unused [1 2 3] contains-at-least-2?) => (sorted-set 1 3))
 
 
 (let [ab (sorted-set :a :b)
@@ -59,12 +59,25 @@
          (find-unused ab (exactly pred)) => b
          (compl ab b)                    => a)))
 
-(fact (smallest-jar-list "cmd" "jar") => ["a"]
+;.;. One small test for a codebase, one giant leap for quality kind! --
+;.;. @zspencer
+(fact (jar-check "jar" [:any] "cmd") => true
+      (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
+                (run-cmd "cmd jar.tmp") => 0))
+
+(fact (jar-check "jar" [:any] "cmd") => falsey
+      (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
+                (run-cmd "cmd jar.tmp") => 1))
+
+;; We need a special case when the list is empty, because an empty zip
+;; is not valid
+(fact (jar-check ...jar... [] ...cmd...) => falsey)
+
+(fact (smallest-jar-list "jar" "cmd") => ["a"]
       (provided
        (jar-list "jar")              => ["a" "b"]
        (smallest ["a" "b"] anything) => ["a"]))
 
-;.;. Good code is its own best documentation. -- Steve McConnell
 (fact (jar-slimmer "jar" "cmd") => nil
       (provided
        (smallest-jar-list "jar" "cmd") => ["a"]

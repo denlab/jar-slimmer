@@ -11,42 +11,35 @@
 (defn sorted-set? "true if input is a sorted set, false otherwise"
   [s] (and (set? s) (sorted? s)))
 
-(defn compl
-  "A set which is the complement of minus to all"
+(defn compl "A set which is the complement of minus to all"
   [all minus]
   {:pre [(sorted-set? all) (sorted-set? minus)]}
   (apply sorted-set (remove #(minus %) all)))
 
-(defn true-without?
-  "Return true if f applied to the complement of minus to all is true, false otherwise"
+(defn true-without? "Return true if f applied to the complement of minus to all is true, false otherwise"
   [all minus f] (f (compl all minus)))
 
-(defn half
-  "Return the first or second half of the given seq"
+(defn half "Return the first or second half of the given seq"
   [s f] (apply sorted-set
                (f (split-at (bit-shift-right (count s) 1)
                             s))))
 
-(defn first-half
-  "Return the 1st half of the given seq"
+(defn first-half "Return the 1st half of the given seq"
   [s] (half s first))
 
-(defn second-half
-  "Return the 1st half of the given seq"
+(defn second-half "Return the 1st half of the given seq"
   [s] (half s second))
 
 ;; WARN: non-TCO optimized recursion, will blow the stack for deep trees !
-(defn find-unused
-  "Find all elements of the set s for which (f s unused) is true."
-  ([s f] (apply sorted-set (find-unused s s f)))
+(defn find-unused "Find all elements of the set s for which (f s unused) is true."
+  ([s f] (apply sorted-set (find-unused (apply sorted-set s) (apply sorted-set s) f)))
   ([all seg f] (cond (empty? seg)              (sorted-set)
                      (true-without? all seg f) seg
                      (nil? (next seg))         (sorted-set)
                      :otherwise                (concat (find-unused all (first-half seg) f)
                                                        (find-unused all (second-half seg) f)))))
 
-(defn smallest
-  "Return the smallest sub seq of the given seq for which the given function return true"
+(defn smallest "Return the smallest sub seq of the given seq for which the given function return true"
   [s f] (compl s (find-unused s f)))
 
 ;; ------------------- </pure-functions> -------------------------------
@@ -54,16 +47,13 @@
 ;; --------------------- <side-effects> --------------------------------
 
 ;; Not using clojure.java.shell.sh, as we would need to parse then pass the params (?)
-(defn run-cmd
-  "Run the given cmd, and return the exit code."
-  [s jar] (.waitFor (.exec (Runtime/getRuntime) s)))
+(defn run-cmd "Run the given cmd, and return the exit code."
+  [s] (.waitFor (.exec (Runtime/getRuntime) s)))
 
-(defn jar-list
-  "Return the list of the files contained in the given jar"
-  [j] (filenames-in-jar (java.util.jar.JarFile. j)))
+(defn jar-list "Return the list of the files contained in the given jar"
+  [j] (apply sorted-set (filenames-in-jar (java.util.jar.JarFile. j))))
 
-(defn build-jar
-  "Given a jar and a list of resource, build the jarout jar with the listed resource"
+(defn build-jar "Given a jar and a list of resource, build the jarout jar with the listed resource"
   [jarin jarout l]
   (with-open
       [fis (FileInputStream. jarin)   bis (BufferedInputStream. fis)  zis (ZipInputStream. bis)
@@ -76,22 +66,25 @@
           (.closeEntry zos))
         (recur (.getNextEntry zis))))))
 
-(defn smallest-jar-list
-  "Return the smallest possible resource list corresponding to the given cmd and jar"
-  [c j] (smallest (jar-list j) #(let [tmpj (str j ".tmp")]
-                                  (build-jar j tmpj %)
-                                  (run-cmd (str c " " tmpj)))))
+(defn jar-check
+  "Given an original jar a list of resource to include and a command, return true if the jar is valid, false if not"
+  [j l c] (when (seq l)
+            (let [tmpj (str j ".tmp")]
+              (build-jar j tmpj l)
+              (zero? (run-cmd (str c " " tmpj))))))
 
-(defn jar-slimmer
-  "build the smallest possible jar given the jar and cmd"
+(defn smallest-jar-list "Return the smallest possible resource list corresponding to the given cmd and jar"
+  [j c] (smallest (jar-list j) #(jar-check j % c)))
+
+(defn jar-slimmer "build the smallest possible jar given the jar and cmd"
   [j c] (build-jar j (str j ".slim") (smallest-jar-list j c)))
 
 (defn -main [& args]
   (let [opts
         (clargon
          args
-         (required ["-j" "--jar" "jar to test"])
+         (required ["-j" "--jar" "jar to slim"])
          (required ["-c" "--cmd" "Cmd that take a uniq arg which is the name of the jar to test"]))]
-    (jar-slimmer (opts "jar") (opts "cmd"))))
+    (time (jar-slimmer (opts :jar) (opts :cmd)))))
 
 ;; --------------------- </side-effects> -------------------------------

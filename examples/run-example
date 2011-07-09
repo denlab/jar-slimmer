@@ -1,0 +1,35 @@
+#!/bin/sh -xe
+
+cd $(dirname $0)
+EX_PATH=$(pwd)
+
+echo "$EX_PATH"
+
+# Building example classes
+
+javac Hello.java
+jar cfe hello.jar Hello *.class
+rm *.class
+
+# Building jar-slimmer.jar
+
+cd ..
+lein uberjar
+cd examples
+
+# Running the test
+
+java -jar ../jar-slimmer-1.0.0-SNAPSHOT-standalone.jar -j "$EX_PATH"/hello.jar -c 'java -jar'
+
+# list the new jar
+
+unzip -l hello.jar.slim
+
+# run the new jar
+
+java -jar hello.jar.slim
+
+# success
+
+banner success 2> /dev/null || echo success
+

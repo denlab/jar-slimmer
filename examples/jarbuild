@@ -1,5 +1,0 @@
-#!/bin/sh -e
-
-javac Hello.java
-jar cfe hello.jar Hello *.class
-rm *.class

@@ -36,14 +36,14 @@
       (at-least-in-2-4-or-6-8 [2 3 4 6 7 8 9]) => true
       (at-least-in-2-4-or-6-8 [2 3 4 6 7 9])   => false)
 
-(fact (find-unused (sorted-set 2 3 4 6 7 8) at-least-in-2-4-or-6-8) => (sorted-set)
-      (find-unused (sorted-set 1 2 3 4 5 6 7 8 9 10) at-least-in-2-4-or-6-8) => (sorted-set 1 5 9 10))
-
 (defn contains-at-least-2? [s] (some #(= 2 %) s))
 
 (fact (contains-at-least-2? [1])   => nil
       (contains-at-least-2? [1 2]) => true
       (contains-at-least-2? [2])   => true)
+
+(fact (find-unused (sorted-set 2 3 4 6 7 8) at-least-in-2-4-or-6-8) => (sorted-set)
+      (find-unused (sorted-set 1 2 3 4 5 6 7 8 9 10) at-least-in-2-4-or-6-8) => (sorted-set 1 5 9 10))
 
 (fact
  (find-unused (sorted-set 2) contains-at-least-2?) => (sorted-set)

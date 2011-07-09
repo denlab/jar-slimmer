@@ -18,8 +18,8 @@
   (apply sorted-set (remove #(minus %) all)))
 
 (defn true-without?
-  [all minus f] "Return true if f applied to the complement of minus to all is true, false otherwise"
-  (f (compl all minus)))
+  "Return true if f applied to the complement of minus to all is true, false otherwise"
+  [all minus f] (f (compl all minus)))
 
 (defn half
   "Return the first or second half of the given seq"
@@ -37,7 +37,7 @@
 
 ;; WARN: non-TCO optimized recursion, will blow the stack for deep trees !
 (defn find-unused
-  "Find all elements of the set s for which (f (- s unused)) is true."
+  "Find all elements of the set s for which (f s unused) is true."
   ([s f] (apply sorted-set (find-unused s s f)))
   ([all seg f] (cond (empty? seg)              (sorted-set)
                      (true-without? all seg f) seg
@@ -53,26 +53,14 @@
 
 ;; --------------------- <side-effects> --------------------------------
 
-(defn -main [& args]
-  (let [opts
-        (clargon
-         args
-         (required ["-j" "--jar" "jar to test"])
-         (required ["-c" "--cmd" "Cmd to test the jar"]))]))
-
-;; Not using clojure.java.shell.sh, as we would need to parse then
-;; pass the params (?)
+;; Not using clojure.java.shell.sh, as we would need to parse then pass the params (?)
 (defn run-cmd
   "Run the given cmd, and return the exit code."
-  [s] (.waitFor (.exec (Runtime/getRuntime) s)))
+  [s jar] (.waitFor (.exec (Runtime/getRuntime) s)))
 
 (defn jar-list
   "Return the list of the files contained in the given jar"
   [j] (filenames-in-jar (java.util.jar.JarFile. j)))
-
-(defn smallest-jar-list
-  "Return the smallest possible resource list corresponding to the given cmd and jar"
-  [c j] (smallest (jar-list j) #(run-cmd c)))
 
 (defn build-jar
   "Given a jar and a list of resource, build the jarout jar with the listed resource"
@@ -88,8 +76,22 @@
           (.closeEntry zos))
         (recur (.getNextEntry zis))))))
 
+(defn smallest-jar-list
+  "Return the smallest possible resource list corresponding to the given cmd and jar"
+  [c j] (smallest (jar-list j) #(let [tmpj (str j ".tmp")]
+                                  (build-jar j tmpj %)
+                                  (run-cmd (str c " " tmpj)))))
+
 (defn jar-slimmer
   "build the smallest possible jar given the jar and cmd"
   [j c] (build-jar j (str j ".slim") (smallest-jar-list j c)))
+
+(defn -main [& args]
+  (let [opts
+        (clargon
+         args
+         (required ["-j" "--jar" "jar to test"])
+         (required ["-c" "--cmd" "Cmd that take a uniq arg which is the name of the jar to test"]))]
+    (jar-slimmer (opts "jar") (opts "cmd"))))
 
 ;; --------------------- </side-effects> -------------------------------

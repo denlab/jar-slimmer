@@ -74,13 +74,16 @@
   [j l c] (when (seq l)
             (let [tmpj (str j ".tmp")]
               (build-jar j tmpj l)
-              (zero? (run-cmd (str c " " tmpj))))))
+              (jar-check tmpj c))))
 
 (defn smallest-jar-list "Return the smallest possible resource list corresponding to the given cmd and jar"
   [j c] (smallest (jar-list j) #(jar-list-check j % c)))
 
-(defn jar-slimmer "build the smallest possible jar given the jar and cmd"
-  [j c] (build-jar j (str j ".slim") (smallest-jar-list j c)))
+(defn jar-slimmer "build the smallest possible jar given the jar and cmd, returns nil if ok, a str message otherwise"
+  [j c] (let [final-j (str j ".slim")]
+          (build-jar j final-j (smallest-jar-list j c))
+          (if-not (jar-check final-j c)
+            "*** FAILURE *** Something wrong happened, the final jar is not valid")))
 
 (defn -main [& args]
   (let [opts
@@ -88,6 +91,8 @@
          args
          (required ["-j" "--jar" "jar to minify"])
          (required ["-c" "--cmd" "Cmd that take a uniq arg which is the name of the jar to test"]))]
-    (time (jar-slimmer (opts :jar) (opts :cmd)))))
+    (time (println (if-let [r (jar-slimmer (opts :jar) (opts :cmd))]
+                     r
+                     "*** SUCCESS ***")))))
 
 ;; --------------------- </side-effects> -------------------------------

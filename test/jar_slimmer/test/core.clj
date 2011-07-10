@@ -1,6 +1,7 @@
 (ns jar-slimmer.test.core
   (:use [jar-slimmer.core])
-  (:use [midje.sweet]))
+  (:use [midje.sweet])
+  (:use [clargon.core]))
 
 ;; placeholder predicate for tests
 (defn pred [s])
@@ -68,9 +69,9 @@
       (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
                 (run-cmd "cmd jar.tmp") => 0))
 
-(fact (jar-list-check "jar" [:any] "cmd") => falsey
+(fact (jar-list-check "jar" [:any] "cmd") => ...result...
       (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
-                (run-cmd "cmd jar.tmp") => 1))
+                (jar-check "jar.tmp" "cmd") => ...result...))
 
 ;; We need a special case when the list is empty, because an empty zip
 ;; is not valid
@@ -84,6 +85,21 @@
 (fact (jar-slimmer "jar" "cmd") => nil
       (provided
        (smallest-jar-list "jar" "cmd") => ["a"]
-       (build-jar "jar" "jar.slim" ["a"])         => nil))
+       (build-jar "jar" "jar.slim" ["a"]) => nil
+       (jar-check "jar.slim" "cmd") => true))
 
+(fact (jar-slimmer "jar" "cmd") => "*** FAILURE *** Something wrong happened, the final jar is not valid"
+      (provided
+       (smallest-jar-list "jar" "cmd") => ["a"]
+       (build-jar "jar" "jar.slim" ["a"]) => nil
+       (jar-check "jar.slim" "cmd") => false))
 
+(fact (-main ...args...) => nil
+      (provided (clargon anything anything anything) => anything
+       (jar-slimmer anything anything) => nil
+                (println "*** SUCCESS ***") => nil))
+
+(fact (-main ...args...) => nil
+      (provided (clargon anything anything anything) => anything
+       (jar-slimmer anything anything) => ...error...
+                (println ...error...) => nil))

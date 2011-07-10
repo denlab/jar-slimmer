@@ -59,19 +59,22 @@
          (find-unused ab (exactly pred)) => b
          (compl ab b)                    => a)))
 
-;.;. One small test for a codebase, one giant leap for quality kind! --
-;.;. @zspencer
-(fact (jar-check "jar" [:any] "cmd") => true
+(fact (jar-check "jar" "cmd") => truthy
+      (provided (run-cmd "cmd jar") => 0)
+      (jar-check "jar" "cmd") => falsey
+      (provided (run-cmd "cmd jar") => 1))
+
+(fact (jar-list-check "jar" [:any] "cmd") => truthy
       (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
                 (run-cmd "cmd jar.tmp") => 0))
 
-(fact (jar-check "jar" [:any] "cmd") => falsey
+(fact (jar-list-check "jar" [:any] "cmd") => falsey
       (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
                 (run-cmd "cmd jar.tmp") => 1))
 
 ;; We need a special case when the list is empty, because an empty zip
 ;; is not valid
-(fact (jar-check ...jar... [] ...cmd...) => falsey)
+(fact (jar-list-check ...jar... [] ...cmd...) => falsey)
 
 (fact (smallest-jar-list "jar" "cmd") => ["a"]
       (provided

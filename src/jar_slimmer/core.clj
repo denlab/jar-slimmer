@@ -66,15 +66,18 @@
           (.closeEntry zos))
         (recur (.getNextEntry zis))))))
 
-(defn jar-check
-  "Given an original jar a list of resource to include and a command, return true if the jar is valid, false if not"
+(defn jar-check "Return true if the test pass on the given jar with the given command, false otherwise"
+  [j c] (zero? (run-cmd (str c " " j))))
+
+(defn jar-list-check
+  "Given an original jar, a list of resource to include and a command, return true if the jar is valid, false if not"
   [j l c] (when (seq l)
             (let [tmpj (str j ".tmp")]
               (build-jar j tmpj l)
               (zero? (run-cmd (str c " " tmpj))))))
 
 (defn smallest-jar-list "Return the smallest possible resource list corresponding to the given cmd and jar"
-  [j c] (smallest (jar-list j) #(jar-check j % c)))
+  [j c] (smallest (jar-list j) #(jar-list-check j % c)))
 
 (defn jar-slimmer "build the smallest possible jar given the jar and cmd"
   [j c] (build-jar j (str j ".slim") (smallest-jar-list j c)))
@@ -83,7 +86,7 @@
   (let [opts
         (clargon
          args
-         (required ["-j" "--jar" "jar to slim"])
+         (required ["-j" "--jar" "jar to minify"])
          (required ["-c" "--cmd" "Cmd that take a uniq arg which is the name of the jar to test"]))]
     (time (jar-slimmer (opts :jar) (opts :cmd)))))
 

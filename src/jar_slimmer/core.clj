@@ -54,17 +54,19 @@
   [j] (apply sorted-set (filenames-in-jar (java.util.jar.JarFile. j))))
 
 (defn build-jar "Given a jar and a list of resource, build the jarout jar with the listed resource"
-  [jarin jarout l]
-  (with-open
-      [fis (FileInputStream. jarin)   bis (BufferedInputStream. fis)  zis (ZipInputStream. bis)
-       fos (FileOutputStream. jarout) bos (BufferedOutputStream. fos) zos (ZipOutputStream. bos)]
-    (loop [ze (.getNextEntry zis)]
-      (when ze
-        (when-let [n (l (.getName ze))]
-          (.putNextEntry zos (ZipEntry. n))
-          (copy zis zos)
-          (.closeEntry zos))
-        (recur (.getNextEntry zis))))))
+  ([jarin jarout l] (build-jar jarin jarout l 9))
+  ([jarin jarout l level]
+     (with-open
+         [fis (FileInputStream. jarin)   bis (BufferedInputStream. fis)  zis (ZipInputStream. bis)
+          fos (FileOutputStream. jarout) bos (BufferedOutputStream. fos) zos (doto (ZipOutputStream. bos)
+                                                                               .setLevel level)]
+       (loop [ze (.getNextEntry zis)]
+         (when ze
+           (when-let [n (l (.getName ze))]
+             (.putNextEntry zos (ZipEntry. n))
+             (copy zis zos)
+             (.closeEntry zos))
+           (recur (.getNextEntry zis)))))))
 
 (defn jar-check "Return true if the test pass on the given jar with the given command, false otherwise"
   [j c] (zero? (run-cmd (str c " " j))))
@@ -73,7 +75,7 @@
   "Given an original jar, a list of resource to include and a command, return true if the jar is valid, false if not"
   [j l c] (when (seq l)
             (let [tmpj (str j ".tmp")]
-              (build-jar j tmpj l)
+              (build-jar j tmpj l 0)
               (jar-check tmpj c))))
 
 (defn smallest-jar-list "Return the smallest possible resource list corresponding to the given cmd and jar"

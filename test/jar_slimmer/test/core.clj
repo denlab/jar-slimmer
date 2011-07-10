@@ -66,11 +66,11 @@
       (provided (run-cmd "cmd jar") => 1))
 
 (fact (jar-list-check "jar" [:any] "cmd") => truthy
-      (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
+      (provided (build-jar "jar" "jar.tmp" [:any] 0) => nil
                 (run-cmd "cmd jar.tmp") => 0))
 
 (fact (jar-list-check "jar" [:any] "cmd") => ...result...
-      (provided (build-jar "jar" "jar.tmp" [:any] ) => nil
+      (provided (build-jar "jar" "jar.tmp" [:any] 0) => nil
                 (jar-check "jar.tmp" "cmd") => ...result...))
 
 ;; We need a special case when the list is empty, because an empty zip
